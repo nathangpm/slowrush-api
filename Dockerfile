@@ -1,18 +1,19 @@
 
-FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /app
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+WORKDIR /build
 
 COPY pom.xml .
+RUN mvn -q -e -DskipTests dependency:go-offline
+
 COPY src ./src
 
-RUN mvn clean package -DskipTests
+RUN mvn -q -e -DskipTests package
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-COPY --from=build /app/target/*-runner.jar app.jar
+COPY --from=build /build/target/*-runner.jar /app/app.jar
 
-ENV QUARKUS_HTTP_PORT=${PORT}
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "/app/app.jar"]
